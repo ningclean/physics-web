@@ -116,16 +116,17 @@ export class CircuitScene extends Scene {
   }
 
   getControlConfig() {
-    return [
-      {
-        type: 'select', key: 'circuitType', label: '电路类型',
-        options: [
-          { label: '串联电路 (Series)', value: 'series' },
-          { label: '并联电路 (Parallel)', value: 'parallel' },
-          { label: '混合电路 (Mixed)', value: 'mixed' }
-        ],
-        onChange: () => this.resetSimulation()
-      },
+        return [
+            {
+                type: 'select', key: 'circuitType', label: '电路类型',
+                options: [
+                    { label: '串联电路 (Series)', value: 'series' },
+                    { label: '并联电路 (Parallel)', value: 'parallel' },
+                    { label: '混合电路 (Mixed)', value: 'mixed' },
+                    { label: '电压测量电路 (Voltage)', value: 'voltage' }
+                ],
+                onChange: () => this.resetSimulation()
+            },
       { 
         type: 'range', key: 'voltage', label: '电源电压 (V)', min: 0, max: 24, step: 1,
         description: '电池组提供的电压。'
@@ -303,9 +304,12 @@ export class CircuitScene extends Scene {
         this.renderSeries(ctx, leftX, rightX, topY, bottomY, s1X, R1, R2, S2, P1, P2, I_total, cy);
     } else if (this.params.circuitType === 'parallel') {
         this.renderParallel(ctx, leftX, rightX, topY, bottomY, s1X, R1, R2, S2, P1, P2, I1, I2, I_total, cy);
+    } else if (this.params.circuitType === 'voltage') {
+        this.renderVoltageMeasurement(ctx, leftX, rightX, topY, bottomY, s1X, R1, R2, P1, P2, I_total, cy);
     } else {
         this.renderMixed(ctx, leftX, rightX, topY, bottomY, s1X, R1, R2, S2, P1, P2, I1, I2, I_total, cy);
     }
+    // (renderVoltageMeasurement 和 getVoltageAcrossL2 方法被移至类的下方定义，避免在 render 内部定义函数)
     
     // 绘制万用表 (显示总电流)
     drawMultimeter(ctx, rightX + 100, bottomY, 60, I_total.toFixed(2), 'A');
@@ -381,6 +385,60 @@ export class CircuitScene extends Scene {
           this.animateCurrent(ctx, path, I);
       }
   }
+
+    // 渲染电压测量电路（电压表并联）
+    renderVoltageMeasurement(ctx, leftX, rightX, topY, bottomY, s1X, R1, R2, P1, P2, I_total, cy) {
+        // 结构: Battery -> S1 -> L1 -> L2 -> GND
+        // 电压表并联在 L2 两端
+        // Manhattan routing，红色导线，无节点
+        const l1X = (leftX + rightX) / 2 - 80;
+        const l2X = (leftX + rightX) / 2 + 80;
+        const vMeterY = cy + 60;
+        // Battery Top to S1 Left
+        drawWire(ctx, [{x: leftX, y: cy - 40}, {x: leftX, y: topY}, {x: s1X - 30, y: topY}], '#d32f2f');
+        // S1 Right to L1 Left
+        drawWire(ctx, [{x: s1X + 30, y: topY}, {x: l1X - 6, y: topY}], '#d32f2f');
+        // L1 Right to L2 Left
+        drawWire(ctx, [{x: l1X + 6, y: topY}, {x: l2X - 6, y: topY}], '#d32f2f');
+        // L2 Right to Battery Bottom
+        drawWire(ctx, [{x: l2X + 6, y: topY}, {x: rightX, y: topY}, {x: rightX, y: bottomY}, {x: leftX, y: bottomY}, {x: leftX, y: cy + 40}], '#d32f2f');
+        // 并联电压表（V）在 L2 两端
+        drawWire(ctx, [{x: l2X - 6, y: topY}, {x: l2X - 6, y: vMeterY}], '#d32f2f');
+        drawWire(ctx, [{x: l2X + 6, y: topY}, {x: l2X + 6, y: vMeterY}], '#d32f2f');
+        // 组件
+        drawLightBulb(ctx, l1X, topY, 15, P1 > 0.1, this.getBulbColor(P1));
+        ctx.fillStyle = '#fff'; ctx.fillText(`L1 (${R1}Ω)`, l1X, topY + 50);
+        drawLightBulb(ctx, l2X, topY, 15, P2 > 0.1, this.getBulbColor(P2));
+        ctx.fillText(`L2 (${R2}Ω)`, l2X, topY + 50);
+        drawSwitch(ctx, s1X, topY, 60, !this.params.switch1);
+        this.registerHitRegion('switch1', s1X, topY, 60, 60 * 0.4);
+        ctx.fillText('S1', s1X, topY - 30);
+        // 电压表
+        drawMultimeter(ctx, l2X, vMeterY, 60, this.getVoltageAcrossL2(), 'V');
+        ctx.fillText('V', l2X, vMeterY + 40);
+        // 动画（电流）
+        if (this.params.showCurrent && I_total > 0.01) {
+            const path = [
+                {x: leftX, y: cy - 40}, {x: leftX, y: topY}, {x: rightX, y: topY},
+                {x: rightX, y: bottomY}, {x: leftX, y: bottomY}, {x: leftX, y: cy + 40}
+            ];
+            this.animateCurrent(ctx, path, I_total);
+        }
+    }
+
+    // 获取 L2 两端电压（用于电压表显示）
+    getVoltageAcrossL2() {
+        // 仅在电压测量电路模式下调用
+        const V = this.params.voltage;
+        const R1 = this.params.r1;
+        const R2 = this.params.r2;
+        const S1 = this.params.switch1;
+        if (!S1) return 0;
+        // 串联电路，L2 两端电压 = I_total * R2
+        const R_total = R1 + R2;
+        const I_total = V / R_total;
+        return +(I_total * R2).toFixed(2);
+    }
 
   // 渲染并联电路
   renderParallel(ctx, leftX, rightX, topY, bottomY, s1X, R1, R2, S2, P1, P2, I1, I2, I_total, cy) {
