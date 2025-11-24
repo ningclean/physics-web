@@ -40,6 +40,13 @@ export class CircuitScene extends Scene {
     return description;
   }
 
+  resetSimulation() {
+    this.time = 0;
+    // Clear charts if they exist
+    if (window.velChart) window.velChart.clear();
+    if (window.accChart) window.accChart.clear();
+  }
+
   setup() {
     this.canvas.style.backgroundColor = this.params.bgColor;
     this.resize(this.canvas.clientWidth, this.canvas.clientHeight);
