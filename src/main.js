@@ -13,6 +13,7 @@ import { DoublePendulumScene } from './scenes/DoublePendulumScene.js';
 import { PlanetaryMotionScene } from './scenes/PlanetaryMotionScene.js';
 import { ProjectileMotionScene } from './scenes/ProjectileMotionScene.js';
 import { WaveInterferenceScene } from './scenes/WaveInterferenceScene.js';
+import { OpticsLensScene } from './scenes/OpticsLensScene.js';
 
 import { ControlPanel } from './components/ControlPanel.js';
 import { FormulaDisplay } from './components/FormulaDisplay.js';
@@ -71,6 +72,11 @@ sceneRegistry.register('wave', WaveInterferenceScene, {
     label: '波的干涉', 
     description: '双波源干涉图样的实时模拟。',
     thumbnail: '/thumbnails/wave.gif' 
+});
+sceneRegistry.register('optics-lens', OpticsLensScene, { 
+    label: '透镜成像', 
+    description: '凸透镜与凹透镜的几何成像规律演示。',
+    thumbnail: '/thumbnails/optics-lens.gif' 
 });
 
 document.addEventListener('DOMContentLoaded', () => {
