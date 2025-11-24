@@ -1,0 +1,380 @@
+:root {
+  --bg-color: #111;
+  --panel-bg: #181818;
+  --text-color: #eee;
+  --border-color: #333;
+  --accent-color: #2f7aea;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+header {
+  padding: 0.5rem 1.2rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.canvas-container {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.canvas-wrapper {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  overflow: hidden; /* Prevent canvas from forcing size */
+  background: #000;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  display: flex; /* Ensure canvas centers or fills */
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove border/shadow from canvas itself since wrapper has it */
+canvas#scene-canvas {
+  border: none;
+  box-shadow: none;
+  display: block;
+}
+
+.controls-panel {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--panel-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.sidebar {
+  flex: 1;
+  min-width: 350px;
+  background: #151515;
+  border-left: 1px solid var(--border-color);
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.panel {
+  background: var(--panel-bg);
+  padding: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.formula-box {
+  min-height: 60px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem; /* Add some bottom padding */
+}
+
+.charts-container canvas {
+  background: #0b0b0b;
+  border: 1px solid var(--border-color);
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+button {
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+button:hover {
+  background: #444;
+}
+
+input[type=range] {
+  vertical-align: middle;
+}
+
+/* Module Labeling System */
+.labeled-container {
+  position: relative;
+}
+
+.labeled-container::before {
+  content: attr(data-label);
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-bottom-right-radius: 4px;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.9;
+  font-weight: bold;
+}
+
+/* Ensure the label doesn't overlap too much if there's padding */
+.panel.labeled-container {
+  padding-top: 1.2rem; /* Make space for label */
+}
+
+.controls-panel.labeled-container {
+  padding-top: 1.2rem;
+}
+
+.charts-container.labeled-container {
+  padding: 1.2rem 0.5rem 0.5rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--panel-bg);
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.controls-panel {
+  margin-top: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+  box-sizing: border-box;
+  /* Ensure it stays at bottom */
+  flex-shrink: 0; 
+  z-index: 10;
+}
+
+/* Adjust canvas container to take full remaining space */
+.canvas-container {
+  padding: 0; /* Remove padding to let canvas fill space */
+  background: #000;
+}
+
+.canvas-wrapper {
+  border: none; /* Remove border as it fills the area */
+  box-shadow: none;
+}
+
+/* Knowledge Section Styles */
+.knowledge-section {
+  background: #1a1a1a;
+  border-top: 1px solid var(--border-color);
+  padding: 2rem;
+  min-height: 400px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: auto; /* Push to bottom if space allows */
+}
+
+.knowledge-content {
+  max-width: 900px;
+  margin: 0 auto;
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.knowledge-content h3 {
+  color: var(--accent-color);
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.knowledge-content p {
+  margin-bottom: 1rem;
+  color: #ccc;
+}
+
+.knowledge-content ul {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+  color: #ccc;
+}
+
+.knowledge-content li {
+  margin-bottom: 0.5rem;
+}
+
+.placeholder-text {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* MathJax/KaTeX specific adjustments */
+.katex-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Home View Styles */
+.view-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.home-header {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: linear-gradient(to bottom, #1a1a1a, #111);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.home-header h1 {
+  font-size: 2.5rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--accent-color);
+}
+
+.home-header p {
+  color: #888;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.home-main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.scene-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.scene-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.scene-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border-color: var(--accent-color);
+}
+
+.card-thumb {
+  width: 100%;
+  height: 160px;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s;
+}
+
+.card-thumb-placeholder {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.card-content {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-content h3 {
+  margin: 0 0 0.5rem 0;
+  color: #fff;
+}
+
+.card-content p {
+  margin: 0;
+  color: #888;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.home-footer {
+  text-align: center;
+  padding: 1.5rem;
+  color: #555;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+/* Simulation View Header Adjustments */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--accent-color);
+  padding: 0.3rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.nav-btn:hover {
+  background: rgba(47, 122, 234, 0.1);
+}

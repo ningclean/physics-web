@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Physics Animation Engine</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script src="/gif.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <!-- 首页视图 -->
+      <div id="home-view" class="view-container">
+        <header class="home-header">
+          <h1>⚛️ Physics Lab</h1>
+          <p>Interactive Physics Simulations for Learning & Exploration</p>
+        </header>
+        <main class="home-main">
+          <div id="scene-grid" class="scene-grid">
+            <!-- Cards will be injected here by JS -->
+          </div>
+        </main>
+        <footer class="home-footer">
+          <p>&copy; 2025 Physics Lab. Built with Vite & Canvas API.</p>
+        </footer>
+      </div>
+
+      <!-- 模拟视图 -->
+      <div id="simulation-view" class="view-container" style="display: none;">
+        <header>
+          <div class="header-left">
+            <button id="back-btn" class="nav-btn">← Back</button>
+            <h2>物理动画引擎 (Physics Engine)</h2>
+          </div>
+          <div id="scene-selector"></div>
+        </header>
+        
+        <main class="layout">
+          <div class="canvas-container">
+            <div class="labeled-container canvas-wrapper" data-label="场景演示 (Scene)">
+              <canvas id="scene-canvas"></canvas>
+            </div>
+          </div>
+          
+          <aside class="sidebar">
+            <div id="metrics" class="panel" style="display: none;"></div>
+            <div id="formula" class="panel formula-box labeled-container" data-label="数学公式 (Formula)"></div>
+            <div id="charts" class="charts-container labeled-container" data-label="实时图表 (Charts)">
+              <canvas id="vel-chart" width="400" height="100"></canvas>
+              <canvas id="acc-chart" width="400" height="100"></canvas>
+            </div>
+          </aside>
+        </main>
+
+        <div id="controls" class="controls-panel labeled-container" data-label="控制面板 (Controls)"></div>
+
+        <!-- 新增：物理知识讲解板块 -->
+        <section id="knowledge" class="knowledge-section labeled-container" data-label="物理原理 (Physics Principles)">
+          <div id="knowledge-content" class="knowledge-content"></div>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
