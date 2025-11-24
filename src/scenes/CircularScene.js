@@ -142,6 +142,20 @@ export class CircularScene extends Scene {
     };
   }
 
+  getRecordingDuration() {
+    const { omega } = this.params;
+    // T = 2 * pi / omega
+    const period = 2 * Math.PI / omega;
+    
+    // 确保至少录制 2 秒
+    let duration = period;
+    while (duration < 2.0) {
+        duration += period;
+    }
+    
+    return duration;
+  }
+
   update(dt, t) {
     // 保存上一帧状态
     this.prevPhys = { ...this.phys };

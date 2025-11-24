@@ -227,6 +227,20 @@ export class SpringOscillatorScene extends Scene {
     };
   }
 
+  getRecordingDuration() {
+    const { mass, stiffness } = this.params;
+    // T = 2 * pi * sqrt(m / k)
+    const period = 2 * Math.PI * Math.sqrt(mass / stiffness);
+    
+    // 确保至少录制 2 秒
+    let duration = period;
+    while (duration < 2.0) {
+        duration += period;
+    }
+    
+    return duration;
+  }
+
   update(dt, t) {
     const { mass, stiffness, damping } = this.params;
     
