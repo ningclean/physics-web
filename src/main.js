@@ -15,6 +15,7 @@ import { ProjectileMotionScene } from './scenes/ProjectileMotionScene.js';
 import { WaveInterferenceScene } from './scenes/WaveInterferenceScene.js';
 import { OpticsLensScene } from './scenes/OpticsLensScene.js';
 import { RefractionScene } from './scenes/RefractionScene.js';
+import { CircuitScene } from './scenes/CircuitScene.js';
 // import { GraphicsDemoScene } from './scenes/GraphicsDemoScene.js'; // No longer used as a scene
 
 import { renderGraphicsDemo } from './pages/GraphicsDemoPage.js';
@@ -92,6 +93,11 @@ sceneRegistry.register('refraction', RefractionScene, {
     description: '为什么水里的鱼看起来比实际浅？',
     thumbnail: '/thumbnails/refraction.gif' 
 });
+sceneRegistry.register('circuit', CircuitScene, { 
+    label: '直流电路实验室', 
+    description: '串联、并联与混合电路的电流与电压模拟。',
+    thumbnail: '/thumbnails/circuit.gif' 
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
@@ -156,15 +162,23 @@ document.addEventListener('DOMContentLoaded', () => {
           velChart.setSeriesNames(chartConfig.vel.series);
           velChart.setColors(chartConfig.vel.colors);
           velChart.clear();
+        } else {
+          velChart.setSeriesNames([]);
+          velChart.clear();
         }
         if (chartConfig.acc) {
           accChart.setLabel(chartConfig.acc.label);
           accChart.setSeriesNames(chartConfig.acc.series);
           accChart.setColors(chartConfig.acc.colors);
           accChart.clear();
+        } else {
+          accChart.setSeriesNames([]);
+          accChart.clear();
         }
       } else {
+        velChart.setSeriesNames([]);
         velChart.clear();
+        accChart.setSeriesNames([]);
         accChart.clear();
       }
       

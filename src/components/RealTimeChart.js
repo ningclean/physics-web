@@ -95,6 +95,16 @@ export class RealTimeChart {
     // 清除画布
     this.ctx.clearRect(0, 0, width, height);
     
+    // 如果没有系列数据，显示提示信息
+    if (!this.seriesNames || this.seriesNames.length === 0) {
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.font = '14px system-ui';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText('不涉及曲线', width / 2, height / 2);
+        return;
+    }
+    
     // 1. 绘制背景网格
     this.drawGrid(width, height);
     

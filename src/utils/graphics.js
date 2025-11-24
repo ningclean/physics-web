@@ -777,11 +777,11 @@ export function drawBattery(ctx, x, y, w, h, angle = 0) {
 }
 
 /**
- * 绘制灯泡
+ * 绘制灯泡 (带底座)
  * @param {CanvasRenderingContext2D} ctx
- * @param {number} x 中心X
- * @param {number} y 中心Y
- * @param {number} size 大小 (半径)
+ * @param {number} x 中心X (底座中心)
+ * @param {number} y 中心Y (底座中心)
+ * @param {number} size 大小 (灯泡半径)
  * @param {boolean} isOn 是否点亮
  * @param {string} color 光色
  */
@@ -789,35 +789,61 @@ export function drawLightBulb(ctx, x, y, size, isOn = false, color = '#ffff00') 
     ctx.save();
     ctx.translate(x, y);
     
-    // 玻璃泡形状 (圆形 + 梯形颈部)
+    // 1. 绘制底座 (Socket)
+    // 底座是一个矩形或梯形，位于 (0, 0) 附近
+    const baseW = size * 1.2;
+    const baseH = size * 0.6;
+    
+    ctx.fillStyle = '#555'; // 深灰色底座
+    ctx.fillRect(-baseW/2, -baseH/2, baseW, baseH);
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-baseW/2, -baseH/2, baseW, baseH);
+    
+    // 接线柱 (螺丝)
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.arc(-baseW/3, 0, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(baseW/3, 0, 3, 0, Math.PI*2); ctx.fill();
+    
+    // 2. 绘制灯泡 (Bulb)
+    // 灯泡位于底座上方 (y < 0)
+    // 移动坐标系到灯泡中心位置
+    const bulbCenterY = -baseH/2 - size * 1.2;
+    ctx.translate(0, bulbCenterY);
+    
     const r = size;
     const neckW = r * 0.6;
     const neckH = r * 0.8;
     
-    // 发光效果
+    // 发光效果 (Glow)
     if (isOn) {
-        const glow = ctx.createRadialGradient(0, -r*0.2, r*0.5, 0, -r*0.2, r*2.5);
+        const glow = ctx.createRadialGradient(0, 0, r*0.5, 0, 0, r*2.5);
         glow.addColorStop(0, color);
         glow.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.globalAlpha = 0.6;
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(0, -r*0.2, r*2.5, 0, Math.PI*2);
+        ctx.arc(0, 0, r*2.5, 0, Math.PI*2);
         ctx.fill();
         ctx.globalAlpha = 1.0;
     }
     
     // 玻璃泡主体
     ctx.beginPath();
-    ctx.arc(0, -r*0.2, r, Math.PI*0.8, Math.PI*2.2); // 大半圆
-    // 颈部连接
-    const neckTopY = -r*0.2 + Math.sin(Math.PI*0.8)*r;
-    const neckTopX = Math.cos(Math.PI*0.8)*r; // 负值
+    ctx.arc(0, 0, r, Math.PI*0.75, Math.PI*2.25); // 大半圆
     
-    // 贝塞尔曲线平滑过渡到颈部
-    ctx.quadraticCurveTo(neckTopX, neckH/2, -neckW/2, neckH);
-    ctx.lineTo(neckW/2, neckH);
-    ctx.quadraticCurveTo(-neckTopX, neckH/2, -neckTopX, neckTopY);
+    // 颈部连接 (连接到底座)
+    // 颈部底部 y = neckH + r (approx) -> 实际上我们要连接到 translate 之前的 0 点上方
+    // 当前坐标系原点在灯泡球心。底座顶部在 -bulbCenterY - baseH/2 = size * 1.2
+    // 让我们简单画一个颈部向下延伸
+    
+    const neckBottomY = size * 1.2;
+    const neckTopX = Math.cos(Math.PI*0.75)*r; // 负值
+    const neckTopY = Math.sin(Math.PI*0.75)*r; // 正值
+    
+    ctx.quadraticCurveTo(neckTopX, neckBottomY/2, -neckW/2, neckBottomY);
+    ctx.lineTo(neckW/2, neckBottomY);
+    ctx.quadraticCurveTo(-neckTopX, neckBottomY/2, -neckTopX, neckTopY);
     
     ctx.closePath();
     
@@ -831,41 +857,33 @@ export function drawLightBulb(ctx, x, y, size, isOn = false, color = '#ffff00') 
     ctx.beginPath();
     ctx.strokeStyle = isOn ? '#fff' : '#555';
     ctx.lineWidth = 2;
-    ctx.moveTo(-neckW/3, neckH);
+    ctx.moveTo(-neckW/3, neckBottomY);
     ctx.lineTo(-neckW/3, 0);
     // 螺旋灯丝
     for(let i=0; i<4; i++) {
         const sx = -neckW/3 + (i/4)*(2*neckW/3);
         const ex = -neckW/3 + ((i+1)/4)*(2*neckW/3);
-        ctx.lineTo((sx+ex)/2, -r*0.2 - (i%2==0?5:-5));
+        ctx.lineTo((sx+ex)/2, 0 - (i%2==0?5:-5));
     }
     ctx.lineTo(neckW/3, 0);
-    ctx.lineTo(neckW/3, neckH);
+    ctx.lineTo(neckW/3, neckBottomY);
     ctx.stroke();
     
-    // 螺纹底座 (Screw Base)
-    const baseH = r * 0.6;
-    const baseW = neckW;
-    
+    // 螺纹底座 (Screw Base) - 在灯泡颈部和底座之间
+    const screwH = size * 0.5;
     ctx.fillStyle = '#ccc';
-    ctx.fillRect(-baseW/2, neckH, baseW, baseH);
+    ctx.fillRect(-neckW/2, neckBottomY - screwH, neckW, screwH);
     ctx.strokeStyle = '#666';
-    ctx.strokeRect(-baseW/2, neckH, baseW, baseH);
+    ctx.strokeRect(-neckW/2, neckBottomY - screwH, neckW, screwH);
     
     // 螺纹线
     ctx.beginPath();
-    for(let i=1; i<4; i++) {
-        const ly = neckH + (i/4)*baseH;
-        ctx.moveTo(-baseW/2, ly);
-        ctx.lineTo(baseW/2, ly + 2); // 斜线
+    for(let i=1; i<3; i++) {
+        const ly = neckBottomY - screwH + (i/3)*screwH;
+        ctx.moveTo(-neckW/2, ly);
+        ctx.lineTo(neckW/2, ly + 2);
     }
     ctx.stroke();
-    
-    // 底部触点
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.arc(0, neckH + baseH, baseW/3, 0, Math.PI, false);
-    ctx.fill();
     
     ctx.restore();
 }
@@ -892,14 +910,6 @@ export function drawWire(ctx, points, color = '#d32f2f', lineWidth = 3) {
         ctx.lineTo(points[i].x, points[i].y);
     }
     ctx.stroke();
-    
-    // 绘制连接点 (节点)
-    ctx.fillStyle = '#333';
-    points.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, lineWidth + 1, 0, Math.PI*2);
-        ctx.fill();
-    });
     
     ctx.restore();
 }
