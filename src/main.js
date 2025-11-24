@@ -14,6 +14,10 @@ import { PlanetaryMotionScene } from './scenes/PlanetaryMotionScene.js';
 import { ProjectileMotionScene } from './scenes/ProjectileMotionScene.js';
 import { WaveInterferenceScene } from './scenes/WaveInterferenceScene.js';
 import { OpticsLensScene } from './scenes/OpticsLensScene.js';
+import { RefractionScene } from './scenes/RefractionScene.js';
+// import { GraphicsDemoScene } from './scenes/GraphicsDemoScene.js'; // No longer used as a scene
+
+import { renderGraphicsDemo } from './pages/GraphicsDemoPage.js';
 
 import { ControlPanel } from './components/ControlPanel.js';
 import { FormulaDisplay } from './components/FormulaDisplay.js';
@@ -23,6 +27,11 @@ import { KnowledgePanel } from './components/KnowledgePanel.js';
 console.log('Physics Engine Initializing...');
 
 // 注册场景
+sceneRegistry.register('graphics-demo', null, { 
+    label: '图形组件库', 
+    description: '展示物理引擎中可复用的图形组件 (Stick Figure, Ball, etc.)。',
+    thumbnail: '/thumbnails/graphicLib.jpg' 
+});
 sceneRegistry.register('pendulum', SimplePendulumScene, { 
     label: '单摆', 
     description: '经典的单摆运动，展示周期与摆长的关系。',
@@ -77,6 +86,11 @@ sceneRegistry.register('optics-lens', OpticsLensScene, {
     label: '透镜成像', 
     description: '凸透镜与凹透镜的几何成像规律演示。',
     thumbnail: '/thumbnails/optics-lens.gif' 
+});
+sceneRegistry.register('refraction', RefractionScene, { 
+    label: '光的折射 (视深)', 
+    description: '为什么水里的鱼看起来比实际浅？',
+    thumbnail: '/thumbnails/refraction.gif' 
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -167,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 3. 视图管理与路由 ---
     const homeView = document.getElementById('home-view');
     const simView = document.getElementById('simulation-view');
+    const customView = document.getElementById('custom-view');
     const sceneGrid = document.getElementById('scene-grid');
     const backBtn = document.getElementById('back-btn');
 
@@ -274,8 +289,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (hash.startsWith('#scene=')) {
             const key = hash.split('=')[1];
             
+            if (key === 'graphics-demo') {
+                 homeView.style.display = 'none';
+                 simView.style.display = 'none';
+                 customView.style.display = 'flex';
+                 renderGraphicsDemo(customView);
+                 return;
+            }
+
             // 切换到模拟视图
             homeView.style.display = 'none';
+            customView.style.display = 'none';
             simView.style.display = 'flex';
             
             // 滚动到顶部
@@ -292,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // 切换到首页视图
             simView.style.display = 'none';
+            customView.style.display = 'none';
             homeView.style.display = 'flex';
             
             // 停止引擎以节省资源

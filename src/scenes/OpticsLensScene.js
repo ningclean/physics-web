@@ -1,5 +1,6 @@
 import { Scene } from '../core/Scene.js';
 import { drawLine, drawDot } from '../utils/draw.js';
+import { drawStickFigure, drawEye } from '../utils/graphics.js';
 import { THEME } from '../config.js';
 import description from '../content/OpticsLens.md?raw';
 
@@ -16,6 +17,7 @@ export class OpticsLensScene extends Scene {
       f: 100,         // 焦距 (px), 正为凸, 负为凹
       do: 200,        // 物距 (px), 默认为正 (左侧)
       ho: 60,         // 物高 (px), 向上为正
+      eyeX: 350,      // 人眼位置 (x坐标)
       showRays: true, // 显示光路
       lensType: 'convex', // 'convex' | 'concave' (用于UI控制f的符号)
       animationSpeed: 1.0, // 动画速度
@@ -77,6 +79,10 @@ export class OpticsLensScene extends Scene {
         onChange: () => this.resetSimulation()
       },
       { 
+        type: 'range', key: 'eyeX', label: '人眼位置', min: 50, max: 500, step: 10,
+        description: '观察者眼睛的水平位置。'
+      },
+      { 
         type: 'range', key: 'animationSpeed', label: '动画速度', min: 0.1, max: 3.0, step: 0.1,
         description: '光线传播的速度。'
       },
@@ -115,12 +121,12 @@ export class OpticsLensScene extends Scene {
     return [
       { 
         label: '透镜公式', 
-        tex: '\frac{1}{f} = \frac{1}{d_o} + \frac{1}{d_i}',
+        tex: '\\frac{1}{f} = \\frac{1}{d_o} + \\frac{1}{d_i}',
         params: []
       },
       { 
         label: '放大率', 
-        tex: 'M = -\frac{d_i}{d_o} = \frac{h_i}{h_o}',
+        tex: 'M = -\\frac{d_i}{d_o} = \\frac{h_i}{h_o}',
         params: []
       }
     ];
@@ -131,24 +137,7 @@ export class OpticsLensScene extends Scene {
   }
 
   getMonitorData(t) {
-    const fAbs = this.params.f;
-    const f = this.params.lensType === 'convex' ? fAbs : -fAbs;
-    const do_val = this.params.do;
-    
-    let di = 0;
-    if (do_val !== f) {
-        di = (f * do_val) / (do_val - f);
-    } else {
-        di = Infinity;
-    }
-    
-    const M = -di / do_val;
-    
-    return {
-      t: t,
-      vel: [di],
-      acc: [M]
-    };
+    return null;
   }
 
   update(dt, t) {
@@ -231,17 +220,28 @@ export class OpticsLensScene extends Scene {
     ctx.stroke();
     ctx.restore();
 
-    // 3. 标记焦点
+    // 3. 标记焦点及整数倍焦距
     const fPixel = fAbs;
-    this.drawFocus(ctx, cx - fPixel, cy, 'F', axisColor);
-    this.drawFocus(ctx, cx + fPixel, cy, 'F\'', axisColor);
+    const maxMultiple = Math.ceil(cx / fPixel); // 计算屏幕内能显示的最大倍数
+
+    for (let i = 1; i <= maxMultiple; i++) {
+        const label = i === 1 ? 'F' : `${i}F`;
+        // 左侧
+        if (cx - i * fPixel > 0) {
+            this.drawFocus(ctx, cx - i * fPixel, cy, label, axisColor);
+        }
+        // 右侧
+        if (cx + i * fPixel < width) {
+            this.drawFocus(ctx, cx + i * fPixel, cy, label + '\'', axisColor);
+        }
+    }
 
     // 4. 绘制物体
     const objX = cx - do_val;
     const objY = cy;
     const objTopY = cy - ho;
     
-    this.drawObjectArrow(ctx, objX, objY, objTopY, objColor, '物');
+    drawStickFigure(ctx, objX, objY, objTopY, objColor, '物');
 
     // 5. 计算像的位置
     let di = 0;
@@ -516,64 +516,120 @@ export class OpticsLensScene extends Scene {
         
         // 注意: drawObjectArrow 画的是从 bottom 到 top 的线，箭头在 top
         // 我们这里 bottom 是动态的
-        this.drawObjectArrow(ctx, imgX, currentBottomY, imgTopY, imgColor, imageProgress >= 1 ? '像' : null);
+        drawStickFigure(ctx, imgX, currentBottomY, imgTopY, imgColor, imageProgress >= 1 ? '像' : null);
         
         ctx.restore();
     }
+
+    // 8. 绘制人眼
+    const eyeXPos = cx + this.params.eyeX;
+    const eyeYPos = cy;
+    // 眼睛看向透镜中心 (cx, cy)
+    // 如果 eyeXPos > cx (在右侧), 向左看 (PI)
+    // 如果 eyeXPos < cx (在左侧), 向右看 (0)
+    const eyeAngle = eyeXPos > cx ? Math.PI : 0;
+    
+    drawEye(ctx, eyeXPos, eyeYPos, 40, eyeAngle);
+    
+    // 9. 绘制视觉光线 (Vision Rays)
+    // 演示人眼如何通过接收光线并反向延长来看到像
+    if (hasImage && showRays) {
+        // 只有当眼睛在透镜右侧 (通常情况) 且光线能到达时才绘制
+        // 简单起见，只要眼睛在透镜右侧就画
+        if (eyeXPos > cx) {
+            // 计算从像点 (imgX, imgTopY) 到 眼睛 (eyeXPos, eyeYPos) 的连线
+            // 这条线穿过透镜的位置
+            const slope = (eyeYPos - imgTopY) / (eyeXPos - imgX);
+            const yAtLens = imgTopY + slope * (cx - imgX);
+            
+            // 检查穿过透镜的点是否在透镜范围内 (假设透镜高度足够大，或者限制一下)
+            if (Math.abs(yAtLens - cy) < lensH/2) {
+                const visionColor = '#00ffff'; // 青色表示视觉光线
+                
+                // 1. 绘制进入眼睛的实光线 (透镜 -> 眼睛)
+                // 实际上光线是从透镜表面 (cx, yAtLens) 射向眼睛
+                ctx.beginPath();
+                ctx.strokeStyle = visionColor;
+                ctx.lineWidth = 2;
+                ctx.moveTo(cx, yAtLens);
+                ctx.lineTo(eyeXPos, eyeYPos);
+                ctx.stroke();
+                
+                // 箭头表示方向
+                const midX = (cx + eyeXPos) / 2;
+                const midY = (yAtLens + eyeYPos) / 2;
+                // drawArrowHead(ctx, midX, midY, Math.atan2(eyeYPos - yAtLens, eyeXPos - cx), visionColor);
+                
+                // 2. 绘制反向延长线 (眼睛/透镜 -> 像)
+                // 如果是虚像 (di < 0)，像在透镜左侧。反向延长线从透镜向左指。
+                // 如果是实像 (di > 0)，像在透镜右侧。
+                //    如果眼睛在实像后 (eyeX > imgX)，光线是 透镜 -> 像 -> 眼睛。
+                //    如果眼睛在实像前 (eyeX < imgX)，眼睛无法聚焦实像(除非有屏幕)，但光线几何上指向像。
+                
+                ctx.save();
+                ctx.setLineDash([3, 3]);
+                ctx.strokeStyle = visionColor;
+                ctx.globalAlpha = 0.7;
+                ctx.beginPath();
+                
+                if (di < 0) {
+                    // 虚像: 绘制从透镜到像的虚线 (反向延长线)
+                    ctx.moveTo(cx, yAtLens);
+                    ctx.lineTo(imgX, imgTopY);
+                } else {
+                    // 实像
+                    if (eyeXPos > imgX) {
+                        // 眼睛在像后面: 光线经过像点。
+                        // 此时 (cx, yAtLens) -> (imgX, imgTopY) 是实光线的一部分
+                        // 我们把它画成实线或者另一种颜色?
+                        // 为了符合"视觉光线"概念，我们画出这条路径
+                        ctx.restore(); // 恢复实线
+                        ctx.beginPath();
+                        ctx.strokeStyle = visionColor;
+                        ctx.moveTo(cx, yAtLens);
+                        ctx.lineTo(imgX, imgTopY);
+                        // 然后从像到眼睛也是实线 (已经包含在 透镜->眼睛 的连线中了? 不，透镜->眼睛是直连)
+                        // 等等，如果实像在中间，(cx, yAtLens), (imgX, imgTopY), (eyeXPos, eyeYPos) 三点共线。
+                        // 所以刚才画的 透镜->眼睛 已经覆盖了。
+                        // 我们只需要强调一下像点
+                        drawDot(ctx, imgX, imgTopY, visionColor, 3);
+                        ctx.save(); // 重新save以便后面restore
+                    } else {
+                        // 眼睛在像前面: 眼睛看向像的位置(在眼睛后面)，这通常看不清。
+                        // 但几何上，光线是汇聚向像点的。
+                        // 画出从眼睛到像点的虚线 (表示光线原本要去的地方)
+                        ctx.moveTo(eyeXPos, eyeYPos);
+                        ctx.lineTo(imgX, imgTopY);
+                    }
+                }
+                ctx.stroke();
+                ctx.restore();
+                
+                // 3. 绘制对应的入射光线 (物体 -> 透镜)
+                // 从物体发出，射向 (cx, yAtLens) 的光线
+                ctx.beginPath();
+                ctx.strokeStyle = visionColor;
+                ctx.globalAlpha = 0.5; // 稍微淡一点
+                ctx.moveTo(objX, objTopY);
+                ctx.lineTo(cx, yAtLens);
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+    }
   }
 
-  drawArrowHead(ctx, x, y, angle, size) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-size/2, size);
-    ctx.lineTo(size/2, size);
-    ctx.closePath();
-    ctx.fillStyle = ctx.strokeStyle;
-    ctx.fill();
-    ctx.restore();
-  }
 
-  drawVHead(ctx, x, y, angle, size) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    ctx.beginPath();
-    ctx.moveTo(-size/2, 0);
-    ctx.lineTo(0, size);
-    ctx.lineTo(size/2, 0);
-    ctx.stroke();
-    ctx.restore();
-  }
 
   drawFocus(ctx, x, y, label, color) {
     drawDot(ctx, x, y, color, 3);
     ctx.fillStyle = color;
     ctx.font = '12px Arial';
-    ctx.fillText(label, x - 5, y + 15);
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x, y + 15);
   }
 
-  drawObjectArrow(ctx, x, bottomY, topY, color, label) {
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.moveTo(x, bottomY);
-    ctx.lineTo(x, topY);
-    ctx.stroke();
-    
-    const headSize = 8;
-    const angle = topY < bottomY ? 0 : Math.PI;
-    this.drawArrowHead(ctx, x, topY, angle, headSize);
-    
-    if (label) {
-        ctx.fillStyle = color;
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(label, x, topY - 10);
-    }
-  }
+
 
   drawRay(ctx, x1, y1, x2, y2, color) {
     ctx.beginPath();

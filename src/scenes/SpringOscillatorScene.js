@@ -1,5 +1,6 @@
 import { Scene } from '../core/Scene.js';
-import { drawDot, drawVector, drawSpring } from '../utils/draw.js';
+import { drawDot, drawVector } from '../utils/draw.js';
+import { drawSpring } from '../utils/graphics.js';
 import { THEME } from '../config.js';
 import { Physics } from '../utils/physics.js';
 import { Integrator } from '../core/Integrator.js';

@@ -126,59 +126,8 @@ export function drawTrail(ctx, points, color = '#ffffff') {
   ctx.restore();
 }
 
-/**
- * 绘制弹簧
- * @param {CanvasRenderingContext2D} ctx
- * @param {number} x1 起点X
- * @param {number} y1 起点Y
- * @param {number} x2 终点X
- * @param {number} y2 终点Y
- * @param {number} coils 线圈数
- * @param {number} radius 弹簧半径(宽度的一半)
- * @param {string} color 颜色
- * @param {number} lineWidth 线宽
- */
-export function drawSpring(ctx, x1, y1, x2, y2, coils, radius, color, lineWidth = 2) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = lineWidth;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  
-  ctx.translate(x1, y1);
-  ctx.rotate(Math.atan2(dy, dx));
-  
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  
-  // 弹簧两端的直线段长度
-  const padding = 20; 
-  // 如果距离太短，压缩 padding
-  const actualPadding = Math.min(padding, len * 0.1);
-  
-  ctx.lineTo(actualPadding, 0);
-  
-  const springLen = len - 2 * actualPadding;
-  const step = springLen / (coils * 2);
-  
-  for (let i = 0; i <= coils * 2; i++) {
-    const x = actualPadding + i * step;
-    // 偶数点在下，奇数点在上
-    let y = 0;
-    if (i > 0 && i < coils * 2) {
-        y = (i % 2 === 0) ? radius : -radius;
-    }
-    ctx.lineTo(x, y);
-  }
-  
-  ctx.lineTo(len, 0);
-  ctx.stroke();
-  ctx.restore();
-}
+// drawSpring 已迁移至 graphics.js，此处移除以避免重复
+
 
 export function drawLine(ctx, x1, y1, x2, y2, color = '#fff', lineWidth = 1) {
   ctx.save();
