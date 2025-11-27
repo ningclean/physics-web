@@ -1,5 +1,6 @@
-import { EventBus } from './EventBus.ts';
-import { Viewport } from './Viewport.ts';
+import { EventBus } from './EventBus';
+import { Viewport } from './Viewport';
+import { Renderer } from './renderers/Renderer';
 
 /**
  * 场景控制配置接口
@@ -66,6 +67,7 @@ export class Scene extends EventBus {
   width: number;
   height: number;
   viewport: Viewport;
+  protected renderer: Renderer | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     super();
@@ -153,9 +155,41 @@ export class Scene extends EventBus {
   /**
    * 每一帧调用，用于绘制到画布。
    * @param {CanvasRenderingContext2D} ctx
+   * @deprecated 使用 renderWithRenderer 方法替代
    */
   render(ctx: CanvasRenderingContext2D): void {
     // 在子类中重写
+  }
+
+  /**
+   * 使用指定的渲染器进行渲染
+   * @param renderer 渲染器实例
+   * @param alpha 插值因子 (0-1)，用于平滑动画
+   */
+  renderWithRenderer(renderer: Renderer, alpha: number = 1.0): void {
+    if (renderer.getType() === 'canvas2d') {
+      // 对于 Canvas 2D 渲染器，使用传统方法
+      const canvasRenderer = renderer as any;
+      if (canvasRenderer.getContext) {
+        const ctx = canvasRenderer.getContext();
+        this.render(ctx);
+      } else {
+        console.error(`[Scene] renderWithRenderer: Failed to get 2D context from renderer`);
+      }
+    } else {
+      // 对于 3D 渲染器，子类需要重写此方法
+      // console.log('[Scene] renderWithRenderer: Calling 3D render');
+      this.render3D(renderer);
+      renderer.render();
+    }
+  }
+
+  /**
+   * 3D 渲染方法，子类可以重写
+   * @param renderer 3D 渲染器
+   */
+  protected render3D(renderer: Renderer): void {
+    // 默认实现为空，3D 场景需要重写此方法
   }
 
   /**
@@ -167,6 +201,8 @@ export class Scene extends EventBus {
     this.width = width;
     this.height = height;
     this.viewport.resize(width, height);
+    console.log('Scene resize called with:', width, height);
+    console.log('Scene canvas size:', this.canvas.width, this.canvas.height, 'style:', this.canvas.style.width, this.canvas.style.height);
   }
 
   /**
@@ -178,9 +214,17 @@ export class Scene extends EventBus {
   }
 
   /**
-   * 获取画布中心的辅助方法
+   * 设置渲染器
+   * @param renderer 渲染器实例
    */
-  get center() {
-    return { x: this.width / 2, y: this.height / 2 };
+  setRenderer(renderer: Renderer): void {
+    this.renderer = renderer;
+  }
+
+  /**
+   * 获取当前渲染器
+   */
+  getRenderer(): Renderer | null {
+    return this.renderer;
   }
 }

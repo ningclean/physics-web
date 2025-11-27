@@ -1,4 +1,4 @@
-import { Scene } from './Scene.js';
+import { Scene } from './Scene';
 
 // 类型定义
 interface SceneMetadata {

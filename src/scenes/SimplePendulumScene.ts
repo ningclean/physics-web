@@ -282,12 +282,16 @@ export class SimplePendulumScene extends Scene {
   }
 
   render(ctx: CanvasRenderingContext2D, alpha: number = 1.0): void {
+    console.log(`[SimplePendulumScene] render: Called with alpha=${alpha.toFixed(3)}, canvas size: ${this.canvas.width}x${this.canvas.height}`);
+
     const { length, mass, g, showVel, showForce, bgColor, vectorScale } = this.params;
 
     // 插值计算渲染状态
     // renderTheta = prevTheta * (1 - alpha) + currTheta * alpha
     const theta = this.prevPhys.theta * (1 - alpha) + this.phys.theta * alpha;
     const omega = this.prevPhys.omega * (1 - alpha) + this.phys.omega * alpha;
+
+    console.log(`[SimplePendulumScene] render: Physics state - theta=${theta.toFixed(3)}, omega=${omega.toFixed(3)}`);
 
     const isLightBg = bgColor === THEME.colors.background.white;
     const mainColor = isLightBg ? '#333' : '#fff';
@@ -306,6 +310,8 @@ export class SimplePendulumScene extends Scene {
     // 转换为屏幕坐标
     const screenPivot = this.viewport.worldToScreen(pivotPos.x, pivotPos.y);
     const screenBall = this.viewport.worldToScreen(ballPos.x, ballPos.y);
+
+    console.log(`[SimplePendulumScene] render: Ball position - world: (${ballPos.x.toFixed(2)}, ${ballPos.y.toFixed(2)}), screen: (${screenBall.x.toFixed(2)}, ${screenBall.y.toFixed(2)})`);
 
     // 1. 绘制环境
     // 竖直参考线
@@ -335,6 +341,8 @@ export class SimplePendulumScene extends Scene {
     ctx.strokeStyle = mainColor;
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    console.log(`[SimplePendulumScene] render: Drew pendulum - pivot at (${screenPivot.x.toFixed(1)}, ${screenPivot.y.toFixed(1)}), ball at (${screenBall.x.toFixed(1)}, ${screenBall.y.toFixed(1)})`);
 
     // 5. 绘制矢量
     // 基础缩放系数 (调整以适应新的物理单位)
@@ -402,5 +410,7 @@ export class SimplePendulumScene extends Scene {
         'T'
       );
     }
+
+    console.log(`[SimplePendulumScene] render: Render completed successfully`);
   }
 }

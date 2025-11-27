@@ -1,21 +1,22 @@
 import './style.css';
-import { Engine } from './core/Engine.ts';
-import { sceneRegistry } from './core/SceneRegistry.ts';
+import { Engine } from './core/Engine';
+import { sceneRegistry } from './core/SceneRegistry';
 
 // 导入场景
-import { CircularScene } from './scenes/CircularScene.ts';
-import { SHMScene } from './scenes/SHMScene.ts';
-import { FreeFallScene } from './scenes/FreeFallScene.ts';
-import { SpringOscillatorScene } from './scenes/SpringOscillatorScene.ts';
-import { SimplePendulumScene } from './scenes/SimplePendulumScene.ts';
-import { ElasticCollisionScene } from './scenes/ElasticCollisionScene.ts';
-import { DoublePendulumScene } from './scenes/DoublePendulumScene.ts';
-import { PlanetaryMotionScene } from './scenes/PlanetaryMotionScene.ts';
-import { ProjectileMotionScene } from './scenes/ProjectileMotionScene.ts';
-import { WaveInterferenceScene } from './scenes/WaveInterferenceScene.ts';
-import { OpticsLensScene } from './scenes/OpticsLensScene.ts';
-import { RefractionScene } from './scenes/RefractionScene.ts';
-import { CircuitScene } from './scenes/CircuitScene.ts';
+import { CircularScene } from './scenes/CircularScene';
+import { SHMScene } from './scenes/SHMScene';
+import { FreeFallScene } from './scenes/FreeFallScene';
+import { SpringOscillatorScene } from './scenes/SpringOscillatorScene';
+import { SimplePendulumScene } from './scenes/SimplePendulumScene';
+import { ElasticCollisionScene } from './scenes/ElasticCollisionScene';
+import { DoublePendulumScene } from './scenes/DoublePendulumScene';
+import { PlanetaryMotionScene } from './scenes/PlanetaryMotionScene';
+import { ProjectileMotionScene } from './scenes/ProjectileMotionScene';
+import { WaveInterferenceScene } from './scenes/WaveInterferenceScene';
+import { OpticsLensScene } from './scenes/OpticsLensScene';
+import { RefractionScene } from './scenes/RefractionScene';
+import { CircuitScene } from './scenes/CircuitScene';
+import { PlanetaryMotionScene3D } from './scenes/PlanetaryMotionScene3D';
 // import { GraphicsDemoScene } from './scenes/GraphicsDemoScene.js'; // No longer used as a scene
 
 import { renderGraphicsDemo } from './pages/GraphicsDemoPage.ts';
@@ -34,6 +35,7 @@ declare global {
     velChart: RealTimeChart;
     accChart: RealTimeChart;
     knowledgePanel: KnowledgePanel;
+    sceneRegistry: typeof sceneRegistry;
   }
 }
 
@@ -79,9 +81,15 @@ sceneRegistry.register('double-pendulum', DoublePendulumScene, {
   thumbnail: '/thumbnails/double-pendulum.gif',
 });
 sceneRegistry.register('planetary', PlanetaryMotionScene, {
-  label: '天体运动',
-  description: '模拟行星绕恒星运动，验证开普勒定律。',
+  label: '天体运动 (2D)',
+  description: '模拟行星绕恒星的运动，展示万有引力定律与开普勒定律。',
   thumbnail: '/thumbnails/planetary.gif',
+});
+sceneRegistry.register('planetary-3d', PlanetaryMotionScene3D, {
+  label: '天体运动 (3D)',
+  description: '3D 版本的天体运动，展示空间中的轨道运动和引力效果。',
+  thumbnail: '/thumbnails/planetary.gif',
+  renderer: 'threejs', // 指定需要 Three.js 渲染器
 });
 sceneRegistry.register('projectile', ProjectileMotionScene, {
   label: '平抛/斜抛',
@@ -127,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.velChart = velChart;
     window.accChart = accChart;
     window.engine = engine;
+    window.sceneRegistry = sceneRegistry;
 
     // --- 2. 注册引擎回调 ---
     engine.onUpdate = (scene, totalTime) => {
@@ -295,15 +304,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 加载场景逻辑
     function loadScene(key: string): void {
-      const SceneClass = sceneRegistry.getSceneClass(key);
-      if (SceneClass) {
-        const sceneInstance = new SceneClass(engine.canvas);
-        engine.loadScene(sceneInstance);
-        engine.start();
-      } else {
-        console.error(`Scene class not found for key: ${key}`);
-        // 如果找不到场景，可能需要返回首页或显示错误
-      }
+      engine.loadSceneByKey(key);
+      engine.start();
     }
 
     // 路由处理函数
@@ -312,6 +314,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (hash.startsWith('#scene=')) {
         const key = hash.split('=')[1];
+
+        if (!key) {
+          console.error('Invalid scene key in URL');
+          window.location.hash = '';
+          return;
+        }
 
         if (key === 'graphics-demo') {
           homeView.style.display = 'none';
